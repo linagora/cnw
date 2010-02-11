@@ -2,7 +2,7 @@
 /**
  * compose_newwindow - Compose(Reply/Forward) in a New Window
  *
- * @version 1.00 (20100210)
+ * @version 1.02 (20100210)
  * @author Karl McMurdo (user xrxca on roundcubeforum.net)
  * @url http://github.com/xrxca/cnw
  * @copyright (c) 2010 Karl McMurdo
@@ -33,6 +33,7 @@ class compose_newwindow extends rcube_plugin
 		if (!is_file(realpath(slashify($this->home).$cssfile)))
 		          $cssfile = 'skins/default/compose.css';
 		$this->include_stylesheet($cssfile);
+		$this->include_script("compose.js");
 	}
     }
 }
