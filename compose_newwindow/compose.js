@@ -20,7 +20,7 @@ if (self.window.name != 'rc_compose_child' ){
 	var T = ( screen.height - H ) / 2 + screen.top - 50;
 	T = (T<screen.top?screen.top:T);
 	L = (L<screen.left?screen.left:L);
-	var childwin = window.open(rcmail.env.comm_path+"&_action=compose&_mbox="+urlencode(rcmail.env.mailbox),'','width='+W+',height='+H+',top='+T+',left='+L);
+	var childwin = window.open(window.location,'','width='+W+',height='+H+',top='+T+',left='+L);
 	// Give the child window a name so we can close it later
 	childwin.name = 'rc_compose_child';
         history.go(-1);
