@@ -1,17 +1,15 @@
 +-------------------------------------------------------------------------+
-|
-|  Author:    Karl McMurdo (user xrxca on roundcubeforum.net)
-|  Plugin:    compose_newwindow
-|  Version:   1.00 (20100210)
-|  Purpose:   Enable compose/reply/forward in new window 
-|  URL:       http://github.com/xrxca/cnw
-|  Copyright: (c) 2010 Karl McMurdo
-|
+|                                                                         | 
+|  Author:    Karl McMurdo (user xrxca on roundcubeforum.net)             |
+|  Plugin:    compose_newwindow                                           |
+|  Purpose:   Enable compose/reply/forward in new window                  |
+|                                                                         |
 +-------------------------------------------------------------------------+
 
-compose_newwindow changes the behavior of the default compose / reply /
-forward buttons in the main mail list so that they open the new message in 
-a separate window (or tab depending on your browser settings)
+compose_newwindow is a Roundcube webmail plugin that changes the behavior
+of the default compose / reply / forward buttons in the main mail list so
+that they open the new message in a separate window (or tab depending on
+your browser settings)
 
 
 To download the file in either ZIP or TAR format go to
