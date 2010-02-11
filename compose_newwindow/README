@@ -16,6 +16,9 @@ a separate window (or tab depending on your browser settings)
 The compose window is also slightly modified (using a css file) to hide
 the main toolbar and move the rest of the items up accordingly.
 
+Note: in order for this to work properly you may have to disable the
+popup blocker in your browser for the webmail site.
+
 If you are using a custom skin the plugin will look in the 
 plugins/compose_newwindow/skins directory for corresponding
 subdirectories and use the file compose.css from that directory
