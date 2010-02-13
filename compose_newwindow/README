@@ -2,7 +2,7 @@
 |
 |  Author:    Karl McMurdo (user xrxca on roundcubeforum.net)
 |  Plugin:    compose_newwindow
-|  Version:   1.05 (20100212)
+|  Version:   2.01 (20100213)
 |  Purpose:   Enable compose/reply/forward in new window 
 |  URL:       http://github.com/xrxca/cnw
 |  Copyright: (c) 2010 Karl McMurdo
@@ -35,7 +35,4 @@ file to config.inc.php in the plugin directory and editing the file.
 
 ToDo: 
 - Get message list to reload in main window on send to show changed flags.
-- Improve handling of compose windows when toolbar not used, currently the
-  main window spawns the popup compose window (causing an issue with some 
-  browsers popup blockers) then gets redrawn using the js history.go.
 - Possibly display the message send results popup in the Main Window.

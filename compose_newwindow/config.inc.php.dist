@@ -8,9 +8,4 @@ $rcmail_config['compose_newwindow_enabled'] = true;
 // Hide the main toolbar in all compose windows.
 $rcmail_config['compose_newwindow_hidebar'] = true;
 
-// By default, compose windows opened by a means other than the message 
-// toolbar buttons do not open in a new window because the current method
-// runs into issues with some browsers popup blockers.
-$rcmail_config['compose_newwindow_allwindows'] = false;
-
 ?>

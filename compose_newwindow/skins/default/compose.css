@@ -1,10 +1,19 @@
 /***** compose_newwindow | modifications to compose window *****/
 
+/* Hide the main taskbar */
 #taskbar {
 	display: none;
 }
+/* Shift the rest up to make up for the taskbar being gone */
 #messagetoolbar,
 #compose-container,
 #compose-attachments {
 	margin-top: -30px;
+}
+/* Hide the Back button
+ for some reason, it wont take display: none so drop zindex and set
+ position absolute so it's behind the send button and unclickable. */
+a.back {
+    position: absolute;
+    z-index: -1;
 }

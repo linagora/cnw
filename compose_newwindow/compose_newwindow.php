@@ -2,7 +2,7 @@
 /**
 * compose_newwindow - Compose(Reply/Forward) in a New Window
 *
-* @version 1.05 (20100212)
+* @version 2.01 (20100213)
 * @author Karl McMurdo (user xrxca on roundcubeforum.net)
 * @url http://github.com/xrxca/cnw
 * @copyright (c) 2010 Karl McMurdo
@@ -12,41 +12,41 @@ class compose_newwindow extends rcube_plugin
 {
     private $rc;
     private $prefs;
+    private $options = array('enabled', 'hidebar');
 
     function init()
     {   
         $this->rc = &rcmail::get_instance();;
-        $this->add_hook('startup', array($this, 'startup'));
-        $this->add_hook('render_page', array($this, 'render_page'));
+        if ( $this->option('enabled') ) {
+            if ( $this->rc->task != 'settings' && ( $this->rc->action == '' || $this->rc->action == 'show' ) ) {
+                $this->include_script('composenewwindow.js');
+            }
+            // Hook the objects that may have mailto: links in them.
+            foreach(array('messageheaders', 'messagebody', 'contactdetails') as $obj) {
+                $this->add_hook("template_object_$obj", array($this, 'template_object'));
+            }
+            $this->add_hook('render_page', array($this, 'render_page'));
+            $this->register_action('plugin.composenewwindow_abooksend', array($this, 'composenewwindow_abooksend'));
+        }
         $this->add_hook('user_preferences', array($this, 'user_preferences'));
         $this->add_hook('save_preferences', array($this, 'save_preferences'));
         $this->add_texts('localization/', true);
-        $this->register_action('plugin.composenewwindow_abooksend', array($this, 'composenewwindow_abooksend'));
     }
   
-    function startup($args) {
-        return($args);
-    }
     function option($option) {
-        // If user option is set, return it
         $val = $this->rc->config->get('cnw_'.$option);
-        if(!is_null($val)) {
-            return($val);
-        } 
-        // If we've already loaded the defaults, return is
+        if(!is_null($val)) return($val);
+        // If we've already loaded the default, return it.
         $val = $this->prefs[$option];
-        if(!is_null($val)) {
-            return($val);
-        } 
+        if(!is_null($val)) return($val); 
         // otherwise load the defaults (the idea here is that the plugin config 
         // file wont be read if the user has overriden the settings already.
-        // This is fine until I put in a non user field.
         if ( file_exists($this->home.'/config.inc.php') ) {
             $this->load_config();        
         } else {
             $this->load_config('config.inc.php.dist');
         }
-        foreach(array('enabled', 'hidebar', 'allwindows') as $opt) {
+        foreach($this->options as $opt) {
             $val = $this->rc->config->get('cnw_'.$opt);
             if(is_null($val)) {
                 $val = $this->rc->config->get('compose_newwindow_'.$opt, false);
@@ -58,40 +58,62 @@ class compose_newwindow extends rcube_plugin
     
     function render_page($args)
     {
-        if ( ($args['template'] == "mail") ) {
+        if ( ($args['template'] == "mail") || ($args['template'] == "message") ) {
             if ( $this->option('enabled') ) {
-                $this->include_script("mail.js");
-                $script = "<script type=\"text/javascript\">\n";
-                $script .= "compnw_onLoad();\n";
-                $script .= "</script>\n";
-                $this->rc->output->add_footer($script);
-                // It should be possible to link the script to the onload
-                // event, but this seems to work.
+                $this->include_script("closewindow.js");
+                $s = array(
+                    "rcmail.command('compose'",
+                    "rcmail.command('reply'",
+                    "rcmail.command('reply-all'",
+                    "rcmail.command('forward'",
+                    );
+                $r = array(
+                    "rcmail.command('plugin.composenewwindow'",
+                    "rcmail.command('plugin.replynewwindow'",
+                    "rcmail.command('plugin.reply-allnewwindow'",
+                    "rcmail.command('plugin.forwardnewwindow'",
+                    );
+                $args['content'] = str_replace($s, $r,$args['content']);
             }
         } elseif ( ($args['template'] == "addressbook")) {
             if ( $this->option('enabled') ) {
-                $this->include_script("addressbook.js");
-                $script = "<script type=\"text/javascript\">\n";
-                $script .= "compnw_onLoad();\n";
-                $script .= "</script>\n";
-                $this->rc->output->add_footer($script);
+                if ( ! $this->option('hidebar') ) {
+                    $this->include_script("closewindow.js");
+                }
+                $s = array(
+                    "rcmail.command('compose'",
+                    );
+                $r = array(
+                    "rcmail.command('plugin.abookcomposenewwindow'",
+                    );
+                $args['content'] = str_replace($s, $r,$args['content']);
             }
         } elseif ( ($args['template'] == "compose") ) {
             if ( $this->option('enabled') ) {
                 if ( $this->option('hidebar') ) {
                     $cssfile = 'skins/' . $this->rc->config->get('skin') . '/compose.css';
                     if (!is_file(realpath(slashify($this->home) . $cssfile)))
-                    $cssfile = 'skins/default/compose.css';
+                        $cssfile = 'skins/default/compose.css';
                     $this->include_stylesheet($cssfile);
                 }
-                if ( $this->option('allwindows') ) {
-                    $this->include_script("compose.js");
-                }
             }
-        } elseif ( $this->option('enabled') && !$this->option('hidebar') ) {
-          //  $this->include_script("mail.js");
+        } elseif ( $this->option('enabled') && ! $this->option('hidebar')) {
+            $this->include_script("closewindow.js");
         }
+        return($args);
     }
+    
+    function template_object($args) {
+        $s = array(
+            "rcmail.command('compose'",
+            );
+        $r = array(
+            "rcmail.command('plugin.composenewwindow'",
+            );
+        $args['content'] = str_replace($s, $r,$args['content']);
+        return($args);
+    }
+    
     function add_checkbox(&$args, $option, $extra = '')
     {
         $config_name = 'cnw_' . $option;
@@ -112,14 +134,13 @@ class compose_newwindow extends rcube_plugin
             // Add checkboxes
             $this->add_checkbox($args, 'enabled');
             $this->add_checkbox($args, 'hidebar');
-            $this->add_checkbox($args, 'allwindows', $this->gettext('allwindows_warning'));
         }
         return $args;
     }
     function save_preferences($args)
     {
         if ($args['section'] == 'compose') {
-            foreach(array('enabled', 'hidebar', 'allwindows') as $option) {
+            foreach($this->options as $option) {
                 $args['prefs']['cnw_' . $option] = isset($_POST['_cnw_' . $option]) ? true : false;
             }
         }
@@ -147,11 +168,6 @@ class compose_newwindow extends rcube_plugin
         } else {
             $this->rc->output->command('plugin.composenewwindow_abooksend', '');
         }
-    }
-    // Used for internal debugging, never called in production release
-    function dbg($var, $txt = '')
-    {
-        raise_error(array('code' => 999, 'type' => 'php', 'message' => print_r(array($txt, $var), true)), true, false);
     }
 }
 
