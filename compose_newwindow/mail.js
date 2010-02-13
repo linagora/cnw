@@ -1,7 +1,7 @@
 /**
  * compose_newwindow - Compose(Reply/Forward) in a New Window
  *
- * @version 1.02 (20100210)
+ * @version 1.05 (20100212)
  * @author Karl McMurdo (user xrxca on roundcubeforum.net)
  * @url http://github.com/xrxca/cnw
  * @copyright (c) 2010 Karl McMurdo
@@ -12,8 +12,10 @@
 if (self.window.name == 'rc_compose_child' ){
     if (window.opener.rcmail) {
 	window.opener.focus();
-	window.opener.location = window.location;
-	window.close();
+// Disabled reload of main window, want to get it to reload message list only
+// to show the reply flag if applicable, othereise leave it where it was
+//	window.opener.location = window.location;
+//	window.close();
     } else {
 	// If the parent has gone away just rename this window and continue.
 	window.name = 'rc_new_parent';
