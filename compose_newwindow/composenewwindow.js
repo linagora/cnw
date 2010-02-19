@@ -1,7 +1,7 @@
 /**
  * compose_newwindow - Compose(Reply/Forward) in a New Window
  *
- * @version 2.01 (20100213)
+ * @version 2.05 (20100218)
  * @author Karl McMurdo (user xrxca on roundcubeforum.net)
  * @url http://github.com/xrxca/cnw
  * @copyright (c) 2010 Karl McMurdo
@@ -16,6 +16,7 @@ if (window.rcmail) {
     rcmail.register_command('plugin.composenewwindow', composenewwindow, true); 
     rcmail.register_command('plugin.forwardnewwindow', forwardnewwindow, true); 
     rcmail.register_command('plugin.abookcomposenewwindow', abookcomposenewwindow, true); 
+    rcmail.addEventListener('plugin.composenewwindow_abooksend', abookcomposecallback);
   })
 }
 
@@ -30,7 +31,7 @@ function composenewwindow(emailaddr) {
 function replynewwindow(i) {
     if (!rcmail) return(true);
     var uid;
-    if(uid=rcmail.get_single_uid()) {
+    if(uid=newwindow_contextuid(i)) {
         var url=rcmail.env.comm_path+"&_action=compose&_mbox="+urlencode(rcmail.env.mailbox)+"&_reply_uid="+uid;
         opencomposewindow(url);
     }
@@ -40,7 +41,7 @@ function replynewwindow(i) {
 function replyallnewwindow(i) {
     if (!rcmail) return(true);
     var uid;
-    if(uid=rcmail.get_single_uid()) {
+    if(uid=newwindow_contextuid(i)) {
         var url=rcmail.env.comm_path+"&_action=compose&_mbox="+urlencode(rcmail.env.mailbox)+"&_reply_uid="+uid+"&_all=1";
         opencomposewindow(url);
     }
@@ -50,7 +51,7 @@ function replyallnewwindow(i) {
 function forwardnewwindow(i) {
     if (!rcmail) return(true);
     var uid;
-    if(uid=rcmail.get_single_uid()) {
+    if(uid=newwindow_contextuid(i)) {
         var url=rcmail.env.comm_path+"&_action=compose&_mbox="+urlencode(rcmail.env.mailbox)+"&_forward_uid="+uid;
         opencomposewindow(url);
     }
@@ -60,15 +61,19 @@ function forwardnewwindow(i) {
 function abookcomposenewwindow(i) {
     if (!rcmail) return(true);
     if(!rcmail.contact_list) return(true);
+    var a_cids = new Array();
     var selection = rcmail.contact_list.get_selection();
-    if (selection.length) {
-        var a_cids = new Array();
-        for (var n=0; n<selection.length; n++)
-            a_cids[a_cids.length] = selection[n];
-        if(a_cids.length) {
-            rcmail.addEventListener('plugin.composenewwindow_abooksend', abookcomposecallback);
-            rcmail.http_request('plugin.composenewwindow_abooksend', '_cid='+urlencode(a_cids.join(','))+'&_source='+urlencode(rcmail.env.source), true);
-        }
+    if (i == 'context' && selection.length <= 1 ) {
+        if ($('#addresslist tbody tr.contextRow') && String($('#addresslist tbody tr.contextRow').attr('id')).match(/rcmrow([a-z0-9\-_=]+)/i))
+            a_cids[a_cids.length] = RegExp.$1;
+    } else {
+        if (selection.length) {
+            for (var n=0; n<selection.length; n++)
+                a_cids[a_cids.length] = selection[n];
+        } 
+    }
+    if(a_cids.length) {
+        rcmail.http_request('plugin.composenewwindow_abooksend', '_cid='+urlencode(a_cids.join(','))+'&_source='+urlencode(rcmail.env.source), true);
     }
     return(false);
 }
@@ -91,4 +96,10 @@ function opencomposewindow(url) {
     // Give the child window a name so we can close it later
     childwin.name = 'rc_compose_child';
     return(false);
+}
+
+function newwindow_contextuid(orig) {
+    if ( orig == 'context' && $('#messagelist tbody tr.contextRow') && String($('#messagelist tbody tr.contextRow').attr('id')).match(/rcmrow([a-z0-9\-_=]+)/i))
+        return RegExp.$1;
+    return rcmail.get_single_uid();
 }

@@ -2,7 +2,7 @@
 /**
 * compose_newwindow - Compose(Reply/Forward) in a New Window
 *
-* @version 2.01 (20100213)
+* @version 2.05 (20100218)
 * @author Karl McMurdo (user xrxca on roundcubeforum.net)
 * @url http://github.com/xrxca/cnw
 * @copyright (c) 2010 Karl McMurdo
@@ -46,6 +46,7 @@ class compose_newwindow extends rcube_plugin
         } else {
             $this->load_config('config.inc.php.dist');
         }
+        $this->prefs['useredits'] = $this->rc->config->get('compose_newwindow_useredits', $this->options);
         foreach($this->options as $opt) {
             $val = $this->rc->config->get('cnw_'.$opt);
             if(is_null($val)) {
@@ -77,7 +78,7 @@ class compose_newwindow extends rcube_plugin
             }
         } elseif ( ($args['template'] == "addressbook")) {
             if ( $this->option('enabled') ) {
-                if ( ! $this->option('hidebar') ) {
+                if ( ( ! $this->option('hidebar') ) || in_array('contextmenu', $this->rc->config->get('plugins'))) {
                     $this->include_script("closewindow.js");
                 }
                 $s = array(
@@ -129,19 +130,28 @@ class compose_newwindow extends rcube_plugin
     function user_preferences($args)
     {
         if ($args['section'] == 'compose') {
-            // Add new block
-            $args['blocks']['compose_newwindow']['name'] = $this->gettext('compose_newwindow');
-            // Add checkboxes
-            $this->add_checkbox($args, 'enabled');
-            $this->add_checkbox($args, 'hidebar');
+            $useredits = $this->option('useredits');
+            if ( count($useredits) > 0 ) {
+                // Add new block
+                $args['blocks']['compose_newwindow']['name'] = $this->gettext('compose_newwindow');
+                // Add checkboxes
+                foreach($this->options as $option) {
+                    if( in_array($option, $useredits)) {
+                        $this->add_checkbox($args, $option);
+                    }
+                }
+            }
+            return $args;
         }
-        return $args;
     }
     function save_preferences($args)
     {
+        $useredits = $this->option('useredits');
         if ($args['section'] == 'compose') {
             foreach($this->options as $option) {
-                $args['prefs']['cnw_' . $option] = isset($_POST['_cnw_' . $option]) ? true : false;
+                if( in_array($option, $useredits)) {
+                    $args['prefs']['cnw_' . $option] = isset($_POST['_cnw_' . $option]) ? true : false;
+                }
             }
         }
         return $args;

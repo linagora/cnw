@@ -2,7 +2,7 @@
 /**
  * compose_newwindow - Compose(Reply/Forward) in a New Window
  *
- * @version 2.01 (20100213)
+ * @version 2.05 (20100218)
  * @author Karl McMurdo (user xrxca on roundcubeforum.net)
  * @url http://github.com/xrxca/cnw
  * @copyright (c) 2010 Karl McMurdo
