@@ -38,6 +38,7 @@ ChangeLog:
            and built in foward as attachment option.
            Changes to old forward as Attachment plugin handling code.
            Updates to handling of contextmenu plugin handling.
+           Incorporate changes from myroundcube.
            Change to default  options file to hopefully fix issues 
            where it wasn't possible to turn the option off in settings.
 
