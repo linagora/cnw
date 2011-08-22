@@ -1,13 +1,18 @@
 <?php
 /**
-* compose_newwindow - Compose(Reply/Forward) in a New Window
-*
-* @version 2.05 (20100218)
-* @author Karl McMurdo (user xrxca on roundcubeforum.net)
-* @url http://github.com/xrxca/cnw
-* @copyright (c) 2010 Karl McMurdo
-*
-*/
+ * compose_newwindow - Compose(Reply/Forward) in a New Window
+ *
+ * @version 3.00 (20110822)
+ * @author Karl McMurdo (user xrxca on roundcubeforum.net)
+ * @url http://github.com/xrxca/cnw
+ * @copyright (c) 2010-2011 Karl McMurdo
+ *
+ * Includes changes/updates made by
+ * @author Roland 'rosali' Liebl - myroundcube@mail4us.net
+ * @url http://myroundcube.googlecode.com
+ *
+ */
+
 class compose_newwindow extends rcube_plugin
 {
     private $rc;
@@ -16,21 +21,28 @@ class compose_newwindow extends rcube_plugin
 
     function init()
     {   
-        $this->rc = &rcmail::get_instance();;
-        if ( $this->option('enabled') ) {
-            if ( $this->rc->task != 'settings' && ( $this->rc->action == '' || $this->rc->action == 'show' ) ) {
-                $this->include_script('composenewwindow.js');
-            }
-            // Hook the objects that may have mailto: links in them.
-            foreach(array('messageheaders', 'messagebody', 'contactdetails') as $obj) {
-                $this->add_hook("template_object_$obj", array($this, 'template_object'));
-            }
-            $this->add_hook('render_page', array($this, 'render_page'));
-            $this->register_action('plugin.composenewwindow_abooksend', array($this, 'composenewwindow_abooksend'));
+      $this->rc = &rcmail::get_instance();
+      if ( $this->option('enabled') ) {
+        $this->include_script('composenewwindow.js');
+        // Hook the objects that may have mailto: links in them.
+        foreach(array('messageheaders', 'messagebody', 'contactdetails') as $obj) {
+          $this->add_hook("template_object_$obj", array($this, 'template_object'));
         }
-        $this->add_hook('user_preferences', array($this, 'user_preferences'));
-        $this->add_hook('save_preferences', array($this, 'save_preferences'));
-        $this->add_texts('localization/', true);
+        $this->add_hook('render_page', array($this, 'render_page'));
+        $this->register_action('plugin.composenewwindow_abooksend', array($this, 'composenewwindow_abooksend'));
+        $this->register_action('plugin.composenewwindow_reload_messagelist', array($this, 'composenewwindow_reload_messagelist'));
+      }
+      $this->add_hook('preferences_list', array($this, 'preferences_list'));
+      $this->add_hook('preferences_save', array($this, 'preferences_save'));
+      $this->add_texts('localization/', true);
+    }
+    
+    function composenewwindow_reload_messagelist() {
+      if(isset($_SESSION['recipient_to_contact'])){
+        $this->rc->output->command('plugin.composenewwindow_reload_messagelist', array());
+        $this->rc->output->send('plugin');
+        exit;
+      }
     }
   
     function option($option) {
@@ -59,24 +71,11 @@ class compose_newwindow extends rcube_plugin
     
     function render_page($args)
     {
-        if ( ($args['template'] == "mail") || ($args['template'] == "message") ) {
-            if ( $this->option('enabled') ) {
-                $this->include_script("closewindow.js");
-                $s = array(
-                    "rcmail.command('compose'",
-                    "rcmail.command('reply'",
-                    "rcmail.command('reply-all'",
-                    "rcmail.command('forward'",
-                    );
-                $r = array(
-                    "rcmail.command('plugin.composenewwindow'",
-                    "rcmail.command('plugin.replynewwindow'",
-                    "rcmail.command('plugin.reply-allnewwindow'",
-                    "rcmail.command('plugin.forwardnewwindow'",
-                    );
-                $args['content'] = str_replace($s, $r,$args['content']);
-            }
-        } elseif ( ($args['template'] == "addressbook")) {
+        if( $this->rc->action == 'compose' ) {
+          if ( $this->option('hidebar') )
+            $this->rc->output->add_script( 'document.getElementById("taskbar").innerHTML = "";','foot');
+        }
+        if ( ($args['template'] == "addressbook")) {
             if ( $this->option('enabled') ) {
                 if ( ( ! $this->option('hidebar') ) || in_array('contextmenu', $this->rc->config->get('plugins'))) {
                     $this->include_script("closewindow.js");
@@ -86,6 +85,30 @@ class compose_newwindow extends rcube_plugin
                     );
                 $r = array(
                     "rcmail.command('plugin.abookcomposenewwindow'",
+                    );
+                $args['content'] = str_replace($s, $r,$args['content']);
+            }
+        }           
+        if ( $this->rc->action != 'compose') {
+            if ( $this->option('enabled') ) {
+                $this->include_script("closewindow.js");
+                $s = array(
+                    "rcmail.command('compose'",
+                    "rcmail.command('reply'",
+                    "rcmail.command('reply-all'",
+                    "rcmail.command('reply-list'",
+                    "rcmail.command('forward'",
+                    "rcmail.command('forward-attachment'",
+                    //"rcmail.command('list','',this)",
+                    );
+                $r = array(
+                    "rcmail.command('plugin.composenewwindow'",
+                    "rcmail.command('plugin.replynewwindow'",
+                    "rcmail.command('plugin.reply-allnewwindow'",
+                    "rcmail.command('plugin.reply-listnewwindow'",
+                    "rcmail.command('plugin.forwardnewwindow'",
+                    "rcmail.command('plugin.forward-attachmentnewwindow'",
+                    //"self.close()",
                     );
                 $args['content'] = str_replace($s, $r,$args['content']);
             }
@@ -127,7 +150,7 @@ class compose_newwindow extends rcube_plugin
             'content' => $checkbox->show($this->option($option)) . $extra, );
     }
 
-    function user_preferences($args)
+    function preferences_list($args)
     {
         if ($args['section'] == 'compose') {
             $useredits = $this->option('useredits');
@@ -144,12 +167,12 @@ class compose_newwindow extends rcube_plugin
             return $args;
         }
     }
-    function save_preferences($args)
+    function preferences_save($args)
     {
         $useredits = $this->option('useredits');
         if ($args['section'] == 'compose') {
             foreach($this->options as $option) {
-                if( in_array($option, $useredits)) {
+                if (in_array($option, $useredits)) {
                     $args['prefs']['cnw_' . $option] = isset($_POST['_cnw_' . $option]) ? true : false;
                 }
             }
@@ -166,8 +189,16 @@ class compose_newwindow extends rcube_plugin
             $CONTACTS->set_page(1);
             $CONTACTS->set_pagesize(100);  // not sure about this
             $recipients = $CONTACTS->search($CONTACTS->primary_key, $cid);
-            while (is_object($recipients) && ($rec = $recipients->iterate()))
-            $mailto[] = format_email_recipient($rec['email'], $rec['name']);
+	    while (is_object($recipients) && ($rec = $recipients->iterate())) {
+		// Added to handle new address book in version 6
+		if ( method_exists($CONTACTS, "get_col_values") ) {
+		    $emails = $CONTACTS->get_col_values('email', $rec, true);
+		    $email = $emails[0];
+		} else {
+		    $email = $rec['email'];
+		}
+                $mailto[] = format_email_recipient($email, $rec['name']);
+	    }
         }
         if (!empty($mailto))
         {
