@@ -179,27 +179,31 @@ class compose_newwindow extends rcube_plugin
         }
         return $args;
     }
+
     function composenewwindow_abooksend() {
         $cid = get_input_value('_cid', RCUBE_INPUT_GET);
+        $source = get_input_value('_source', RCUBE_INPUT_GET);
         $recipients = null;
         $mailto = array();
-        $CONTACTS = $this->rc->get_address_book(null, true);
+        $CONTACTS = $this->rc->get_address_book($source, true);
+
         if ($cid && preg_match('/^[a-z0-9\-\+\/_=]+(,[a-z0-9\-\+\/_=]+)*$/i', $cid))
         {
-            $CONTACTS->set_page(1);
-            $CONTACTS->set_pagesize(100);  // not sure about this
-            $recipients = $CONTACTS->search($CONTACTS->primary_key, $cid);
-	    while (is_object($recipients) && ($rec = $recipients->iterate())) {
-		// Added to handle new address book in version 6
-		if ( method_exists($CONTACTS, "get_col_values") ) {
-		    $emails = $CONTACTS->get_col_values('email', $rec, true);
-		    $email = $emails[0];
-		} else {
-		    $email = $rec['email'];
-		}
-                $mailto[] = format_email_recipient($email, $rec['name']);
-	    }
+          $CONTACTS->set_page(1);
+          $CONTACTS->set_pagesize(100);  // not sure about this
+          $recipients = $CONTACTS->search($CONTACTS->primary_key, $cid);
+          while (is_object($recipients) && ($rec = $recipients->iterate())) {
+            // Added to handle new address book in version 6
+            if ( method_exists($CONTACTS, "get_col_values") ) {
+              $emails = $CONTACTS->get_col_values('email', $rec, true);
+              $email = $emails[0];
+            } else {
+              $email = $rec['email'];
+            }
+            $mailto[] = format_email_recipient($email, $rec['name']);
+          }
         }
+
         if (!empty($mailto))
         {
             $mailto_str = join(', ', $mailto);
