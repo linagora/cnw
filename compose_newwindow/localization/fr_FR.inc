@@ -8,7 +8,7 @@
 | Licensed under the GNU GPL                                            |
 |                                                                       |
 +-----------------------------------------------------------------------+
-| Author: Anthony Prades <anthony.prades@blue-mind.net                  |
+| Author: Anthony Prades <toony.github@chezouam.net>                    |
 +-----------------------------------------------------------------------+
 */
 
