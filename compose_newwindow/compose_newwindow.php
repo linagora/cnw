@@ -94,6 +94,7 @@ class compose_newwindow extends rcube_plugin
                 $this->include_script("closewindow.js");
                 $s = array(
                     "rcmail.command('compose'",
+                    "rcmail.command('edit'",
                     "rcmail.command('reply'",
                     "rcmail.command('reply-all'",
                     "rcmail.command('reply-list'",
@@ -103,6 +104,7 @@ class compose_newwindow extends rcube_plugin
                     );
                 $r = array(
                     "rcmail.command('plugin.composenewwindow'",
+                    "rcmail.command('plugin.editnewwindow'",
                     "rcmail.command('plugin.replynewwindow'",
                     "rcmail.command('plugin.reply-allnewwindow'",
                     "rcmail.command('plugin.reply-listnewwindow'",

@@ -12,6 +12,7 @@ $(document).ready(function() {
   if (window.rcmail) {
     rcmail.addEventListener('init', function(evt) {
       rcmail.register_command('plugin.composenewwindow', composenewwindow, true);
+      rcmail.register_command('plugin.editnewwindow', editnewwindow, true);
       rcmail.register_command('plugin.replynewwindow', replynewwindow, true); 
       rcmail.register_command('plugin.reply-allnewwindow', replyallnewwindow, true);
       rcmail.register_command('plugin.reply-listnewwindow', replylistnewwindow, true);
@@ -22,6 +23,30 @@ $(document).ready(function() {
       rcmail.addEventListener('plugin.composenewwindow_abooksend', abookcomposecallback);
       rcmail.addEventListener('plugin.composenewwindow_reload_messagelist', composenewwindow_reload_messagelist);
     });  
+
+    rcmail.msglist_dbl_click = function(list) {
+      if (this.preview_timer)
+          clearTimeout(this.preview_timer);
+      
+      if (this.preview_read_timer)
+          clearTimeout(this.preview_read_timer);
+      
+      var uid = list.get_single_selection();
+      if (uid && this.env.mailbox == this.env.drafts_mailbox)
+          rcmail.env.composenewwindow = opencomposewindow(rcmail.env.comm_path+'&_action=compose&_draft_uid='+uid+'&_mbox='+urlencode(this.env.mailbox));
+      else if (uid)
+          this.show_message(uid, false, false);
+    };
+
+    rcmail.origCommand = rcmail.command;
+    rcmail.command = function(command, props, obj) {
+      if( command == 'edit' && this.task=='mail' && (cid = this.get_single_uid())) {
+          url = (this.env.mailbox == this.env.drafts_mailbox) ? '_draft_uid=' : '_uid=';
+          rcmail.env.composenewwindow = opencomposewindow(rcmail.env.comm_path+'&_action=compose&'+url+cid+'&_mbox='+urlencode(this.env.mailbox));
+      }else {
+        this.origCommand(command, props, obj);
+      }
+    };
   }
 });
 
@@ -33,6 +58,20 @@ function composenewwindow(emailaddr) {
     if (!rcmail) return(true);
     var url=rcmail.env.comm_path+"&_action=compose"; 
     url = rcmail.get_task_url('mail', url)+'&_to='+urlencode(emailaddr);
+    rcmail.env.composenewwindow = opencomposewindow(url);
+    return(false);
+}
+
+function editnewwindow(emailaddr) {
+    if (!rcmail) return(true);
+    var url=rcmail.env.comm_path+"&_action=compose"; 
+    uid = (rcmail.env.mailbox == rcmail.env.drafts_mailbox) ? '_draft_uid=' : '_uid=';
+    if (typeof rcmail.message_list === "undefined") {
+        messageId = getUrlParam("_uid");
+    }else {
+        messageId = rcmail.message_list.get_selection();
+    }
+    url = url+"&"+uid+messageId;
     rcmail.env.composenewwindow = opencomposewindow(url);
     return(false);
 }
@@ -181,4 +220,9 @@ function newwindow_contextuid(orig) {
     if ( orig == 'context' && $('#messagelist tbody tr.contextRow') && String($('#messagelist tbody tr.contextRow').attr('id')).match(/rcmrow([a-z0-9\-_=]+)/i))
        return RegExp.$1;
     return rcmail.get_single_uid();
+}
+
+function getUrlParam(name){
+    var results = new RegExp('[\\?&amp;]' + name + '=([^&amp;#]*)').exec(window.location.href);
+    return results[1] || 0;
 }
