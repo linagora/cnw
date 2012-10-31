@@ -43,8 +43,9 @@ $(document).ready(function() {
       if( command == 'edit' && this.task=='mail' && (cid = this.get_single_uid())) {
           url = (this.env.mailbox == this.env.drafts_mailbox) ? '_draft_uid=' : '_uid=';
           rcmail.env.composenewwindow = opencomposewindow(rcmail.env.comm_path+'&_action=compose&'+url+cid+'&_mbox='+urlencode(this.env.mailbox));
+          return(false);
       }else {
-        this.origCommand(command, props, obj);
+        return(this.origCommand(command, props, obj));
       }
     };
   }
